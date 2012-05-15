@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- bootstrap css -->
+    <link rel="stylesheet" type="text/css" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css">
+    <!-- some custom stuff... -->
+    <style type="text/css">
+      body {
+        padding-top: 10px;
+      }
+      #results {
+        position: relative;
+      }
+      
+      .webresult {
+        word-wrap: break-word;
+        display: none;
+      }
+
+      .webresult .embed a, .webresult .embed .description {
+        display: none;
+      }
+
+      .webresult div.url {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+    <center>
+      <div class="page-header">
+        <h1>SkiceSearch</h1>
+      </div>
+      <form id="form-search" class="form-search">
+        <input class="input-xxlarge search-query" id="query" type="text" placeholder="Insert your query">
+        <button class="btn btn-primary">Search</button>
+      </form>
+    </center>
+    <div class="page-header">
+      <h1>Results</h1>
+    </div>
+    <div id="results">
+      <p>No results searched yet.</p>
+    </div>
+    </div>
+
+    <footer>
+      <div class="footer-wrap">
+        <div class="container">
+          <hr>
+          <p class="pull-left">&copy; 2012 <a id="skicelab-footer-link" href="http://skicelab.com">SkiceLab</a></p>
+          <p class="poweredby pull-right">Powered by <a href="http://bing.com">Bing</a>, <a href="http://embed.ly">Embed.ly</a>, <a href="http://www.jquery.com">jQuery</a> and <a href="http://www.wookmark.com/jquery-plugin">Wookmark jQuery plugin</a></p>
+        </div>
+      </div>
+    </footer>
+  </body>
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script src="https://raw.github.com/GBKS/Wookmark-jQuery/master/jquery.wookmark.min.js"></script>
+  <script src="http://scripts.embed.ly/jquery.embedly.min.js"></script>
+  <script type="text/javascript">
+$(document).ready(function() {
+    function update_wookmark() {
+        $('#results .status').hide();
+        $('.webresult').wookmark({offset: 8, container: $('#results')});
+    }
+
+    $("#form-search").submit(function(evt) {
+        evt.preventDefault();
+        var search_input = $('#query').val();
+        var keyword = encodeURIComponent(search_input);
+        // Bing Search API 
+        var bing_url = 'http://api.search.live.net/json.aspx?JsonType=callback&JsonCallback=?&Appid=FDB60ECD1BF476867B0A01A93576C0CA3D9F711E&query=' + keyword + '&sources=web&web.count=20';
+        $('#results').html('<img class="status" src="http://www.freeiconsweb.com/Icons-show/loading/loading40.gif">')
+
+        $.ajax({
+            type: "GET",
+            url: bing_url,
+            dataType: "jsonp",
+            success: function(response) {
+                // $("#results").html('<img class="status" src="http://www.freeiconsweb.com/Icons-show/loading/loading40.gif">');
+                if (response.SearchResponse.Web.Results.length) {
+                    $.each(response.SearchResponse.Web.Results, function(i, data) {
+                        var title = data.Title;
+                        var dis = data.Description;
+                        var url = data.Url;
+
+                        var final = "<div id='res" + i + "' class='webresult span4'><h4 class='title'><a href='" + url + "'>" + title + "</a></h4><p class='desc'>" + dis + "</p><div class='url'>" + url + "</div></div&gt;";
+                        $("#results").append(final); // Result
+                    });
+                    $('.webresult a').embedly({
+                      maxWidth: 280,
+                      wmode: 'transparent',
+                      method: 'after',
+                      key: '0563d0aa9e1311e19fef4040aae4d8c9',
+                      success: function(data, dict) {
+                        if (data.thumbnail_url) {
+                           output = data['code'];
+                           $(dict['node']).after(output);
+                           $(dict['node']).parent().find('img').load(update_wookmark);
+                           $(dict['node']).parent('div.webresult').show();
+                      }}});
+                    //update_wookmark();
+                }
+                else {
+                    $("#results").html("<div id='no'>No Results</div>");
+                }
+            }
+        });
+    });
+});
+</script>
+</html>
